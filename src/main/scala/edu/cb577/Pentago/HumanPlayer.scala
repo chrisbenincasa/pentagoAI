@@ -6,19 +6,28 @@
 
 package edu.cb577.Pentago
 
+import edu.cb577.Pentago.Move.MOVE_PATTERN
 import edu.cb577.Pentago.Piece.Piece
 
 class HumanPlayer(name: String, piece: Piece) extends Player(name, piece) {
   override def nextMove(board: Board): Move = {
-    import Move._
 
-    val move = readLine("Please enter your move in the format \"{block}/{position} {rotateBlock}{rotateDirection}\"\n")
-    move match {
+    println(27.toChar + "[11;H")
+    var move = ""
+    do {
+      move = readLine("Please enter your move in the format \"{block}/{position} {rotateBlock}{rotateDirection}\"\n").trim
+    } while (getMoveFromString(move).isEmpty)
+
+    getMoveFromString(move).get
+  }
+
+  private def getMoveFromString(moveStr: String): Option[Move] = {
+    moveStr match {
       case MOVE_PATTERN(block, pos, rotate, dir) => {
         val direction = Direction.safeDirectionFromString(dir).getOrElse(throw new RuntimeException)
-        Move(block.toInt, pos.toInt, rotate.toInt, direction, piece)
+        Some(Move(block.toInt, pos.toInt, rotate.toInt, direction, piece))
       }
-      case _ => println("that move sucked"); throw new RuntimeException
+      case _ => None
     }
   }
 }

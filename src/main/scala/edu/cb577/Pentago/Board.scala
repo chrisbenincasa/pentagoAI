@@ -55,6 +55,14 @@ case class Board(private val board: List[Matrix[Piece]]) {
     applyMoves0(moves, this)
   }
 
+  def pieceCount: Int = {
+    (for {
+      block <- 1 to 4
+      position <- 1 to 9
+      if pieceAtPosition(block, position) != Piece.Blank
+    } yield true).length
+  }
+
   def asLists: List[List[Piece]] = {
     def merge(a: Matrix[Piece], b: Matrix[Piece]): List[List[Piece]] = {
       (a zip b).map {

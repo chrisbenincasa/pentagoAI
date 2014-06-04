@@ -26,7 +26,7 @@ object PlayerType extends Enumeration {
 object Player {
   def playerForPlayerType(name: String, piece: Piece, playerType: PlayerType): Player = playerType match {
     case PlayerType.Human => new HumanPlayer(name, piece)
-    case PlayerType.Computer => new ComputerPlayer(name, piece) with Negamax with Heuristic1
+    case PlayerType.Computer => new ComputerPlayer(name, piece) with Minimax with Heuristic2
   }
 }
 

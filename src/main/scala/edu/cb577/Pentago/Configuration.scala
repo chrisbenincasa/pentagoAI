@@ -18,7 +18,7 @@ case class Configuration(
   var player1Token: Piece,
   var player2Token: Piece,
   var whoMakesNextMove: Int,
-//  var board: Board,
+  var board: Board,
   var moveHistory: Queue[Move]
 )
 
@@ -44,6 +44,24 @@ object Configuration {
       }
 
       val board = (0 until 6).map(_ => nextOption.getOrElse(throw new RuntimeException)).toList
+      val (upper, lower) = board.splitAt(3)
+
+      def getPieceMatrices(l: List[String]): List[Matrix[Piece]] = {
+        val lSplit = l.map(_.splitAt(3))
+        val (leftList, rightList) = lSplit.zipWithIndex.map {
+          case ((left, right), idx) => {
+            val leftList = left.map(_.toString).flatMap(Piece.safePieceFromString)
+            val rightList = right.map(_.toString).flatMap(Piece.safePieceFromString)
+            (leftList.toList, rightList.toList)
+          }
+        }.unzip
+
+        List(new Matrix(leftList), new Matrix(rightList))
+      }
+
+      val matrices = getPieceMatrices(upper) ++ getPieceMatrices(lower)
+
+      val boardObj = new Board(matrices)
 
       @tailrec
       def allLines(hasNext: Boolean, accum: List[String]): List[String] = {
@@ -83,6 +101,7 @@ object Configuration {
         player1Token,
         player2Token,
         whoMovesNext,
+        boardObj,
         moves
       ))
     } catch {

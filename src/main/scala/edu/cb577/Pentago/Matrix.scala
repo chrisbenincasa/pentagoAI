@@ -25,8 +25,8 @@ object Piece extends Enumeration {
 
 class Matrix[T](i: List[List[T]]) extends Iterable[Iterable[T]] {
 
-  private val rows = i.size
-  private val cols = i.headOption.map(_.size).getOrElse(0)
+  val rows = i.size
+  val cols = i.headOption.map(_.size).getOrElse(0)
 
   override def iterator: Iterator[Iterable[T]] = new Iterator[Iterable[T]] {
     private var curr = i

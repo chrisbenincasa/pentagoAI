@@ -17,6 +17,7 @@ trait AdversarialSearch {
   protected var startTime: Long = 0L
   protected val timeBound: Option[Long]
   protected val depthBound: Option[Int]
+  protected val depthFunction: Option[(Board => Int)]
 
   val piece: Piece
 
@@ -57,8 +58,10 @@ trait Negamax extends AdversarialSearch {
       toList.map(m => (m, board.applyMove(m))).
       sortBy(t => evaluate(t._2, piece)).reverse
 
+    val depth = depthFunction.map(_.apply(board)).orElse(depthBound)
+
     val movesAndBoards = moves.par.map {
-      case (m, newBoard) => (m, -negamax(newBoard, depthBound, Long.MinValue, Long.MaxValue, color = -1))
+      case (m, newBoard) => (m, -negamax(newBoard, depth, Long.MinValue, Long.MaxValue, color = -1))
     }
 
     movesAndBoards.maxBy(_._2)._1
@@ -113,7 +116,7 @@ trait Minimax extends AdversarialSearch {
   private def minimax(node: Board, depth: Option[Int], alpha: Long, beta: Long, isMaximizing: Boolean): Long = {
     val possibleMoves = allPossibleMoves(node).toList.map(move => (move, node.applyMove(move))).sortBy(tup => evaluate(tup._2, piece))
 
-    if (depth.map(_ == 0).exists(identity) || possibleMoves.length == 0) return evaluate(node, piece)
+    if (depth.map(_ == 0).exists(identity) || possibleMoves.length == 0 || isPastTimeBound) return evaluate(node, piece)
 
     var a = alpha
     var b = beta

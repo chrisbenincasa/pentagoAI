@@ -12,7 +12,7 @@ import scala.annotation.tailrec
 
 object Game extends App {
   override def main(args: Array[String]): Unit = {
-    val configurationFile = new File("src/main/resources/test-001")
+    val configurationFile = new File("src/main/resources/test-002")
     val configuration = try {
       val is = new FileInputStream(configurationFile)
       Configuration.parseConfiguration(is)
@@ -27,13 +27,10 @@ object Game extends App {
       (new HumanPlayer("Human", Piece.White), new ComputerPlayer("Computer", Piece.Black) with Negamax with Heuristic1)
     }
 
-    val emptyBoard = Board.EMPTY_BOARD
-    val board = configuration.map(config => {
-      emptyBoard.applyMoves(config.moveHistory)
-    }).getOrElse(Board.EMPTY_BOARD)
+    val board = configuration.map(_.board).getOrElse(Board.EMPTY_BOARD)
 
     // TODO check on Windows
-    print(27.toChar + "[2J") // clear screen
+    // print(27.toChar + "[2J") // clear screen
 
     new Game(board, player1, player2, configuration.map(_.whoMakesNextMove).getOrElse(1)).play
   }
@@ -42,10 +39,10 @@ object Game extends App {
     println("Loaded configuration file.")
 
     def getPlayerType(num: Int, name: String): PlayerType = {
-      var playerTypeStr = readLine("Please enter the playerType for player %d (\"human\" or \"computer\") (%s)\n".format(num, name))
-      while (!isValidPlayerType(playerTypeStr)) {
-        playerTypeStr = readLine("Please enter the playerType for player %d (%s)\n".format(num, name))
-      }
+      var playerTypeStr = ""
+      do {
+        playerTypeStr = readLine("Please enter the playerType for player %d (\"human\" or \"computer\") (%s)\n".format(num, name)).trim
+      } while (!isValidPlayerType(playerTypeStr))
 
       PlayerType.safePlayerTypeFromString(playerTypeStr).get
     }
@@ -63,16 +60,17 @@ object Game extends App {
 class Game(var board: Board, player1: Player, player2: Player, var whoMovesNext: Int) {
   @tailrec
   final def play: Unit = {
+    print(27.toChar + "[2J") // clear screen
     print(27.toChar + "[;H") // move cursor to top left
+    println(board)
     val moveToApply = getNextMove
     board = board.applyMove(moveToApply)
     println("Applying " + moveToApply.toString)
-    println(board)
     println("\r**********************")
     (GameHelper.didPieceWin(board, player1.piece), GameHelper.didPieceWin(board, player2.piece)) match {
-      case (true, true)   => println("It was a tie!")
-      case (false, true)  => println("Player 2 wins!")
-      case (true, false)  => println("Player 1 wins!")
+      case (true, true)   => println(board); println("It was a tie!")
+      case (false, true)  => println(board); println("Player 2 wins!")
+      case (true, false)  => println(board); println("Player 1 wins!")
       case (false, false) => play
     }
   }

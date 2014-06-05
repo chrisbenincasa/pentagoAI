@@ -16,7 +16,7 @@ object Piece extends Enumeration {
 
   def safePieceFromString(str: String): Option[Piece] = {
     try {
-      Some(Piece.withName(str))
+      Some(Piece.withName(str.toLowerCase))
     } catch {
       case e: NoSuchElementException => None
     }

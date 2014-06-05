@@ -7,12 +7,13 @@
 package edu.cb577.Pentago
 
 import edu.cb577.Pentago.Piece.Piece
-import java.io.InputStream
+import java.io.{FileOutputStream, File, InputStream}
 import java.util.Scanner
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
 case class Configuration(
+  var configurationName: String,
   var player1Name: String,
   var player2Name: String,
   var player1Token: Piece,
@@ -20,10 +21,31 @@ case class Configuration(
   var whoMakesNextMove: Int,
   var board: Board,
   var moveHistory: Queue[Move]
-)
+) {
+  val DEFAULT_PATH = "src/main/resources/"
+
+  def writeConfiguration(): Unit = {
+    val file = new File(DEFAULT_PATH + configurationName)
+    val fos = new FileOutputStream(file, false) // Don't append, overwrite
+
+    fos.write((player1Name + "\n").getBytes)
+    fos.write((player2Name + "\n").getBytes)
+    fos.write((player1Token.toString.capitalize + "\n").getBytes)
+    fos.write((player2Token.toString.capitalize + "\n").getBytes)
+    fos.write((whoMakesNextMove + "\n").getBytes)
+    val boardString = board.asLists.map(row => row.mkString + "\n").mkString
+    fos.write(boardString.getBytes)
+    moveHistory.foreach(move => {
+      fos.write((move.toString + "\n").getBytes)
+    })
+
+    fos.flush()
+    fos.close()
+  }
+}
 
 object Configuration {
-  def parseConfiguration(in: InputStream): Option[Configuration] = {
+  def parseConfiguration(configurationName: String, in: InputStream): Option[Configuration] = {
     import Move._
 
     val scanner = new Scanner(in)
@@ -96,6 +118,7 @@ object Configuration {
       val moves = getMoves(moveLines, Queue.empty[Move])
 
       Some(Configuration(
+        configurationName,
         player1Name,
         player2Name,
         player1Token,

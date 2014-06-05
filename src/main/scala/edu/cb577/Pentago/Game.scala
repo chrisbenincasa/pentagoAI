@@ -9,69 +9,113 @@ package edu.cb577.Pentago
 import edu.cb577.Pentago.PlayerType.PlayerType
 import java.io.{FileNotFoundException, FileInputStream, File}
 import scala.annotation.tailrec
+import edu.cb577.Pentago.Piece.Piece
+import scala.collection.immutable.Queue
+import scala.util.Random
 
 object Game extends App {
   override def main(args: Array[String]): Unit = {
-    val configurationFile = new File("src/main/resources/test-002")
-    val configuration = try {
-      val is = new FileInputStream(configurationFile)
-      Configuration.parseConfiguration(is)
-    } catch {
-      case e: FileNotFoundException => {
-        e.printStackTrace()
-        None
+    val fileName = args.headOption
+    val configuration = fileName.flatMap(file => {
+      val configurationFile = new File(file)
+      try {
+        val is = new FileInputStream(configurationFile)
+        val c = Configuration.parseConfiguration(file, is)
+        println("Loaded configuration file.")
+        c
+      } catch {
+        case e: FileNotFoundException => {
+          e.printStackTrace()
+          None
+        }
       }
-    }
+    }).getOrElse({
+      val (player1Name, player1Piece) = getPlayerInfo(1, None)
+      val (player2Name, player2Piece) = getPlayerInfo(2, Some(player1Piece))
 
-    val (player1, player2) = configuration.map(getPlayers).getOrElse {
-      (new HumanPlayer("Human", Piece.White), new ComputerPlayer("Computer", Piece.Black) with Negamax with Heuristic1)
-    }
+      val whoMovesNext = 1
+      val board = Board.EMPTY_BOARD
+      val moves = Queue.empty[Move]
 
-    val board = configuration.map(_.board).getOrElse(Board.EMPTY_BOARD)
+      val configName = new Random().alphanumeric.take(8).mkString
+
+      Configuration(configName, player1Name, player2Name, player1Piece, player2Piece, whoMovesNext, board, moves)
+    })
+
+    val shouldKillAfterMove = if (args.isDefinedAt(1)) {
+      val arg = args.apply(2)
+      try {
+        arg.toBoolean
+      } catch {
+        case e: IllegalArgumentException => false
+      }
+    } else false
+
+    val (player1, player2) = getPlayers(configuration.player1Name, configuration.player1Token, configuration.player2Name, configuration.player2Token)
 
     // TODO check on Windows
     // print(27.toChar + "[2J") // clear screen
 
-    new Game(board, player1, player2, configuration.map(_.whoMakesNextMove).getOrElse(1)).play
+    new Game(configuration, player1, player2, shouldKillAfterMove).play
   }
 
-  private def getPlayers(config: Configuration): (Player, Player) = {
-    println("Loaded configuration file.")
+  private def getPlayers(player1Name: String, player1Token: Piece, player2Name: String, player2Token: Piece): (Player, Player) = {
+    val player1Type = getPlayerType(1, player1Name)
+    val player2Type = getPlayerType(2, player2Name)
 
-    def getPlayerType(num: Int, name: String): PlayerType = {
-      var playerTypeStr = ""
-      do {
-        playerTypeStr = readLine("Please enter the playerType for player %d (\"human\" or \"computer\") (%s)\n".format(num, name)).trim
-      } while (!isValidPlayerType(playerTypeStr))
+    (Player.playerForPlayerType(player1Name, player1Token, player1Type),
+      Player.playerForPlayerType(player2Name, player2Token, player2Type))
+  }
 
-      PlayerType.safePlayerTypeFromString(playerTypeStr).get
-    }
+  private def getPlayerInfo(num: Int, otherPiece: Option[Piece]): (String, Piece) = {
+    var name: String = ""
+    do {
+      name = readLine("Please enter the name of player %d\n".format(num))
+    } while (name.trim.length == 0)
 
-    val player1Type = getPlayerType(1, config.player1Name)
-    val player2Type = getPlayerType(2, config.player2Name)
+    var pieceStr: String = ""
+    do {
+      pieceStr = readLine("Please enter the piece color for player %d. (W or B)\n".format(num))
+    } while (Piece.safePieceFromString(pieceStr).isEmpty || otherPiece.map(_ == Piece.safePieceFromString(pieceStr).get).exists(identity))
 
-    (Player.playerForPlayerType(config.player1Name, config.player1Token, player1Type),
-      Player.playerForPlayerType(config.player2Name, config.player2Token, player2Type))
+    (name, Piece.safePieceFromString(pieceStr).get)
   }
 
   private def isValidPlayerType(str: String): Boolean = PlayerType.safePlayerTypeFromString(str.toLowerCase).isDefined
+
+  private def getPlayerType(num: Int, name: String): PlayerType = {
+    var playerTypeStr = ""
+    do {
+      playerTypeStr = readLine("Please enter the playerType for player %d (\"human\" or \"computer\") (%s)\n".format(num, name)).trim
+    } while (!isValidPlayerType(playerTypeStr))
+
+    PlayerType.safePlayerTypeFromString(playerTypeStr).get
+  }
 }
 
-class Game(var board: Board, player1: Player, player2: Player, var whoMovesNext: Int) {
+class Game(config: Configuration, player1: Player, player2: Player, shouldKillAfterMove: Boolean) {
+  var board: Board = config.board
+  var whoMovesNext: Int = config.whoMakesNextMove
+
   @tailrec
   final def play: Unit = {
     print(27.toChar + "[2J") // clear screen
     print(27.toChar + "[;H") // move cursor to top left
     println(board)
+
     val moveToApply = getNextMove
-    board = board.applyMove(moveToApply)
     println("Applying " + moveToApply.toString)
+    board = board.applyMove(moveToApply)
+    config.board = board
+    config.moveHistory = config.moveHistory.enqueue(moveToApply)
+    config.writeConfiguration()
+
     println("\r**********************")
     (GameHelper.didPieceWin(board, player1.piece), GameHelper.didPieceWin(board, player2.piece)) match {
       case (true, true)   => println(board); println("It was a tie!")
       case (false, true)  => println(board); println("Player 2 wins!")
       case (true, false)  => println(board); println("Player 1 wins!")
-      case (false, false) => play
+      case (false, false) => if (shouldKillAfterMove) return else play
     }
   }
 
@@ -83,6 +127,7 @@ class Game(var board: Board, player1: Player, player2: Player, var whoMovesNext:
       move = player.nextMove(board)
     }
     whoMovesNext = if (whoMovesNext == 1) 2 else 1
+    config.whoMakesNextMove = whoMovesNext
     move
   }
 }

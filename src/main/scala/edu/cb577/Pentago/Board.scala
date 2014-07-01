@@ -25,11 +25,24 @@ object Board {
 case class Board(private val board: List[Matrix[Piece]]) {
   import Board._
 
+  /**
+   * Retrieve the Piece at the given block/position of the board
+   * Expected 1-based indexes
+   * @return the piece type at the given position
+   */
   def pieceAtPosition(block: Int, pos: Int): Piece = board.apply(block - 1).apply((pos - 1) / 3, (pos- 1) % 3)
 
+  /**
+   * Retrieve an entire block from the Board
+   * @return the specified block
+   */
   def getBlock(block: Int): Matrix[Piece] = board.apply(block - 1)
 
-  // Thread board through transformations and return the new Board object
+  /**
+   * Apply a move to the Board and return a new Board
+   * @param move move to apply
+   * @return the new Board
+   */
   def applyMove(move: Move): Board = {
     val moveBlock = move.block - 1
     val rotationBlock = move.rotationBlock - 1
@@ -46,6 +59,10 @@ case class Board(private val board: List[Matrix[Piece]]) {
     new Board(updatedBoard2)
   }
 
+  /**
+   * Apply a series of moves to a board and return the resulting board
+   * @return the resulting board
+   */
   def applyMoves(moves: Queue[Move]): Board = {
     @tailrec
     def applyMoves0(moves: Queue[Move], board: Board): Board = {
@@ -55,6 +72,9 @@ case class Board(private val board: List[Matrix[Piece]]) {
     applyMoves0(moves, this)
   }
 
+  /**
+   * Retrieve the number of non-blank pieces currently on the board
+   */
   def pieceCount: Int = {
     (for {
       block <- 1 to 4
@@ -63,6 +83,10 @@ case class Board(private val board: List[Matrix[Piece]]) {
     } yield true).length
   }
 
+  /**
+   * Retrieve the board as a series of list where each list represents a single row of pieces
+   * @return
+   */
   def asLists: List[List[Piece]] = {
     def merge(a: Matrix[Piece], b: Matrix[Piece]): List[List[Piece]] = {
       (a zip b).map {

@@ -103,6 +103,7 @@ trait Heuristic2 extends Heuristic {
       }
     }
 
+    // Get a maps of [consecutive pieces -> frequencies] for each direction
     val rowPieceCount = boardList.flatMap(consecutiveCounts(_, piece))
     val columnPieceCount = columns.flatMap(consecutiveCounts(_, piece))
 
@@ -115,6 +116,7 @@ trait Heuristic2 extends Heuristic {
       case (row, col) => wholeBoard.apply(row, col)
     }).flatMap(consecutiveCounts(_, piece))
 
+    // Combine and score
     val allFrequencies = rowPieceCount ++ columnPieceCount ++ rightDiagonalCount ++ leftDiagonalCount
     val freqMap = allFrequencies.groupBy(_._1).mapValues(l => l.map(_._2).sum)
 
@@ -122,10 +124,11 @@ trait Heuristic2 extends Heuristic {
     val score4 = freqMap.get(4).map(_ * 10000L).getOrElse(0L)
     val score5 = freqMap.get(5).map(_ * 100000L).getOrElse(0L)
 
-    val middles = (1 to 4).map(num => {
-      if (board.pieceAtPosition(num, 5) == piece) 5 else 0
-    }).sum
+    // Add points for middle pieces
+//    val middles = (1 to 4).map(num => {
+//      if (board.pieceAtPosition(num, 5) == piece) 5 else 0
+//    }).sum
 
-    score3 + score4 + score5 + middles
+    score3 + score4 + score5
   }
 }

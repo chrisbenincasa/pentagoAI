@@ -49,6 +49,9 @@ trait AdversarialSearch {
   protected def isPastTimeBound: Boolean = timeBound.map(t => (System.currentTimeMillis() - startTime) >= t).exists(identity)
 }
 
+/**
+ * Implementation of Negamax
+ */
 trait Negamax extends AdversarialSearch {
   this: AdversarialSearch with Heuristic =>
 
@@ -97,6 +100,9 @@ trait Negamax extends AdversarialSearch {
   }
 }
 
+/**
+ * Implentation of Minimax
+ */
 trait Minimax extends AdversarialSearch {
   this: AdversarialSearch with Heuristic =>
 
@@ -110,9 +116,14 @@ trait Minimax extends AdversarialSearch {
       case (m, newBoard) => (m, minimax(newBoard, depthBound, Long.MaxValue, Long.MinValue, isMaximizing = false))
     }
 
-    movesAndBoards.minBy(_._2)._1
+    movesAndBoards.maxBy(_._2)._1
   }
 
+  /**
+   * Recursive implementation of the Minimax algorithm with alpha-beta pruning
+   * In addition, this implementation is time-bounded by a constant initialized above
+   * @return
+   */
   private def minimax(node: Board, depth: Option[Int], alpha: Long, beta: Long, isMaximizing: Boolean): Long = {
     val possibleMoves = allPossibleMoves(node).toList.map(move => (move, node.applyMove(move))).sortBy(tup => evaluate(tup._2, piece))
 
@@ -146,6 +157,9 @@ trait Minimax extends AdversarialSearch {
   }
 }
 
+/**
+ * Implementation of NegaScout
+ */
 trait PVS extends AdversarialSearch {
   this: AdversarialSearch with Heuristic =>
 
@@ -193,6 +207,9 @@ trait PVS extends AdversarialSearch {
   }
 }
 
+/**
+ * Flail wildly! used for testing only...
+ */
 trait FlailWildly extends AdversarialSearch {
   this: AdversarialSearch with Heuristic =>
 

@@ -15,7 +15,16 @@ import scala.util.Random
 
 object Game extends App {
   override def main(args: Array[String]): Unit = {
-    val fileName = args.headOption
+    val (first, second) = args.length match {
+      case 1 => (args.headOption.map(_.trim), None)
+      case 2 => (args.headOption.map(_.trim), Some(args.apply(1).trim))
+      case _ => (None, None)
+    }
+
+    val isBoolean = first.flatMap(getBooleanSafe).isDefined
+
+    val fileName = if (isBoolean) None else first
+
     val configuration = fileName.flatMap(file => {
       val configurationFile = new File(file)
       try {
@@ -25,7 +34,6 @@ object Game extends App {
         c
       } catch {
         case e: FileNotFoundException => {
-          e.printStackTrace()
           None
         }
       }
@@ -42,19 +50,9 @@ object Game extends App {
       Configuration(configName, player1Name, player2Name, player1Piece, player2Piece, whoMovesNext, board, moves)
     })
 
-    val shouldKillAfterMove = if (args.isDefinedAt(1)) {
-      val arg = args.apply(2)
-      try {
-        arg.toBoolean
-      } catch {
-        case e: IllegalArgumentException => false
-      }
-    } else false
+    val shouldKillAfterMove = if (isBoolean) first.flatMap(getBooleanSafe).getOrElse(false) else second.flatMap(getBooleanSafe).getOrElse(false)
 
     val (player1, player2) = getPlayers(configuration.player1Name, configuration.player1Token, configuration.player2Name, configuration.player2Token)
-
-    // TODO check on Windows
-    // print(27.toChar + "[2J") // clear screen
 
     new Game(configuration, player1, player2, shouldKillAfterMove).play
   }
@@ -90,6 +88,14 @@ object Game extends App {
     } while (!isValidPlayerType(playerTypeStr))
 
     PlayerType.safePlayerTypeFromString(playerTypeStr).get
+  }
+
+  private def getBooleanSafe(str: String): Option[Boolean] = {
+    try {
+      Some(str.trim.toBoolean)
+    } catch {
+      case e => None
+    }
   }
 }
 

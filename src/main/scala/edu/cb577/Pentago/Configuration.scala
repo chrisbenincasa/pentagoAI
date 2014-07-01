@@ -49,7 +49,7 @@ object Configuration {
     import Move._
 
     val scanner = new Scanner(in)
-    def nextOption: Option[String] = if (scanner.hasNext) Some(scanner.next) else None
+    def nextOption: Option[String] = if (scanner.hasNextLine) Some(scanner.nextLine()) else None
 
     try {
       val player1Name = nextOption.getOrElse(throw new RuntimeException)
@@ -95,12 +95,15 @@ object Configuration {
         } else accum
       }
 
+      if (scanner.hasNextLine) scanner.nextLine()
       val moveLines = allLines(scanner.hasNextLine, Nil)
+      println(moveLines)
 
       @tailrec
       def getMoves(moves: List[String], accum: Queue[Move], moveAccum: Int = 0): Queue[Move] = {
         moves match {
           case Nil => accum
+          case x :: xs if x.length == 0 => getMoves(xs, accum, moveAccum)
           case x :: xs => {
             val move = x match {
               case MOVE_PATTERN(block, pos, rotate, direction) => {

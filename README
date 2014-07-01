@@ -1,0 +1,69 @@
+Contained in this directory is an SBT project for a PentagoAI implementation in Scala. Scala is an object-functional programming language that runs on the JVM.
+
+Requirements to run:
+  * Java binaries
+  * Scala (2.10.*) binaries
+  * SBT (Simple Build Tool)
+
+Instructions to run:
+  * Install Java (JDK) version 6
+    * http://docs.oracle.com/cd/E19509-01/820-3208/inst_cli_jdk_javahome_t/
+    * http://www.oracle.com/technetwork/java/javase/index-137561.html
+  * Install Scala 2.10.2
+    * http://www.scala-lang.org/download/2.10.2.html (the download link will recognize your operating system)
+  * Install SBT 0.13.*
+    * http://www.scala-sbt.org/0.13.2/docs/Getting-Started/Setup.html
+  * Follow instructions for installation of each of these software packages
+  * In your chosen command prompt environment, navigate to the root of this directory
+  * Run "sbt compile" to compile the Scala program
+  * More detailed running instructions detailed below
+
+Running instructions and options:
+  * To run with no configuration loaded, run `sbt run`
+  * To run with a conifguration file `sbt "run { file path relative to project dir }"`
+    * For instance, with a configuration file named "test-001" saved in "src/main/resources/", the command would be: `sbt "run src/main/resources/test-001"`
+  * To run and kill after a file was written with the latest move, run:
+    * `sbt "run true"`
+  * One can combine the two options to load from a configuration file and kill the program after the next move is made
+    * `sbt "run {filepath} true"`
+
+File summaries:
+  * AdverserialSearch.scala
+    * Contains implementation of 3 adversarial search algorithms and settings used to configure them
+    * Implementations include: Minimax, Negamax, and NegaScout
+    * All search methods implemented as "traits" which can be mixed into (dependency injection) Computer players to allow them to choose
+      search methods at runtime.
+    * Each search function has the ability to be limited by depth and/or time
+  * Board.scala
+    * Represents the Pentago board and is backed by a List of Matrices
+  * ComputerPlayer.scala
+    * Represents the artificial player which uses search methods and heuristics to decide on moves to make
+    * By default, a computer player loaded by configuration uses Minimax and Heuristic2
+  * Configuration.scala
+    * Responsible for reading and writing game configuration
+  * Direction.scala
+    * Enumeration class representing board rotation directions
+  * Game.scala
+    * Includes game initialization and playing logic. Responsible for reading command line arguments and gather user input
+      for player names, tokens, and types. In addition, it is responsible for actually running the "game" of Pentago
+  * GameHelper.scala
+    * Includes common game logic used by various parts of the program.
+    * Singleton
+  * Heuristic.scala
+    * Similar to AdversarialSearch.scala -- implemented as a series of traits
+    * Injected into ComputerPlayers
+    * Responsible for calculating score of a (Board, Piece) combination
+  * HumanPlayer.scala
+    * Represents a human player and has logic to parse moves entered via STDIN
+  * Matrix.scala
+    * Matrix represented as a List[List[T]] including functions needed for common Pentago moves
+  * Move.scala
+    * Pattern-matchable class represnting a single Pentago move
+  * Player.scala
+    * Abstract class defining methods each player type must define
+  * WinState.scala
+    * Enumeration representing the state of the current board (Win, Tie, Nothing)
+
+The code has minor commenting throughout that can be used to get insight into certain parts of the program.
+
+In addition, test output games can be viewed in the src/main/resources directory.
